@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+.viz-root{
+  color-scheme:light;
+  --bg:#f5f6f8; --surface:#ffffff; --surface-2:#f0f2f5; --border:#e7e9ee;
+  --text-primary:#14161a; --text-secondary:#5b6070; --text-muted:#9096a3;
+  --accent:#2a78d6; --accent-soft:#e8f1fc; --bar-off:#d6e6fa; --bar-na:#c9ccd3;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])) .viz-root{
+    color-scheme:dark;
+    --bg:#0f1012; --surface:#18191c; --surface-2:#222327; --border:#2a2c31;
+    --text-primary:#f0f1f3; --text-secondary:#b4b8c2; --text-muted:#7c818c;
+    --accent:#3987e5; --accent-soft:#1d2b3e; --bar-off:#243650; --bar-na:#4a4d55;
+    --shadow:0 1px 2px rgba(0,0,0,.3);
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'IBM Plex Sans Thai',system-ui,sans-serif;font-size:14px;-webkit-font-smoothing:antialiased}
+.viz-root{background:var(--bg);color:var(--text-primary);min-height:100vh}
+.wrap{max-width:1360px;margin:0 auto;padding:28px 28px 40px}
+
+/* Header */
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.eyebrow{font-size:12.5px;font-weight:600;letter-spacing:.04em;color:var(--accent);margin-bottom:4px}
+h1{margin:0;font-size:26px;font-weight:700;letter-spacing:-.01em}
+.meta{display:flex;align-items:center;gap:10px;color:var(--text-secondary);font-size:13px}
+.dot{width:8px;height:8px;border-radius:50%;background:#1baf7a;box-shadow:0 0 0 3px rgba(27,175,122,.18)}
+.icon-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-primary);border-radius:10px;padding:7px 12px;font:inherit;font-size:13px;cursor:pointer}
+.icon-btn:hover{background:var(--surface-2)}
+
+/* Toolbar */
+.toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:12px;padding:4px;gap:2px}
+.seg button{border:none;background:none;font:inherit;font-size:13px;color:var(--text-secondary);padding:6px 14px;border-radius:9px;cursor:pointer}
+.seg button.on{background:var(--surface);color:var(--text-primary);font-weight:600;box-shadow:0 1px 3px rgba(16,24,40,.1)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;flex:1}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:5px 6px 5px 12px;border-radius:999px;background:var(--accent-soft);color:var(--text-primary);font-size:13px}
+.chip span{color:var(--text-secondary)}
+.chip button{border:none;background:none;color:var(--text-secondary);cursor:pointer;font-size:15px;line-height:1;width:22px;height:22px;border-radius:50%}
+.chip button:hover{background:rgba(0,0,0,.06)}
+.hint{color:var(--text-muted);font-size:13px}
+.clear{border:none;background:none;color:var(--accent);font:inherit;font-size:13px;cursor:pointer;font-weight:500}
+
+/* Grid & cards */
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.c6{grid-column:span 6}.c4{grid-column:span 4}.c5{grid-column:span 5}.c7{grid-column:span 7}
+@media(max-width:1080px){.c4{grid-column:span 6}.c5,.c7{grid-column:span 12}}
+@media(max-width:720px){.c4,.c6{grid-column:span 12}.wrap{padding:18px 14px}}
+.card{background:var(--surface);border-radius:16px;padding:18px 20px 14px;box-shadow:var(--shadow);border:1px solid var(--border);min-width:0}
+.card-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:12px}
+.card h2{margin:0;font-size:15.5px;font-weight:600}
+.card .sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+.total{font-size:13px;color:var(--text-secondary);white-space:nowrap}
+.total b{font-size:18px;color:var(--text-primary);font-weight:700;margin-right:3px;font-variant-numeric:tabular-nums}
+.box{position:relative}
+#loading{padding:120px 0;text-align:center;color:var(--text-secondary)}
+.foot{margin-top:18px;font-size:12px;color:var(--text-muted);text-align:center}
+</style>
+</head>
+<body>
+<div class="viz-root"><div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">กลุ่มการพยาบาล · รพร.สว่างแดนดิน</div>
+      <h1>โครงสร้างกำลังคน</h1>
+    </div>
+    <div class="meta">
+      <span class="dot"></span><span id="stamp">กำลังโหลด…</span>
+      <button class="icon-btn" id="btnReload" title="โหลดข้อมูลใหม่">↻ รีเฟรช</button>
+    </div>
+  </header>
+
+  <div id="loading">กำลังโหลดข้อมูล…</div>
+  <div id="app" style="display:none">
+    <div class="toolbar">
+      <div class="seg" id="seg">
+        <button data-v="active" class="on">ปฏิบัติงานอยู่</button>
+        <button data-v="exited">ออกแล้ว</button>
+        <button data-v="">ทั้งหมด</button>
+      </div>
+      <div class="chips" id="chips"></div>
+      <button class="clear" id="btnClear" style="display:none">ล้างตัวกรอง</button>
+    </div>
+
+    <div class="grid">
+      <div class="card c6"><div class="card-h"><div><h2>ตำแหน่ง</h2></div><div class="total" id="t_position"></div></div><div class="box"><canvas id="c_position"></canvas></div></div>
+      <div class="card c6"><div class="card-h"><div><h2>ประเภทการจ้าง</h2></div><div class="total" id="t_type"></div></div><div class="box"><canvas id="c_type"></canvas></div></div>
+      <div class="card c4"><div class="card-h"><div><h2>ระดับ</h2></div><div class="total" id="t_level"></div></div><div class="box"><canvas id="c_level"></canvas></div></div>
+      <div class="card c4"><div class="card-h"><div><h2>บทบาท</h2></div><div class="total" id="t_staff_role"></div></div><div class="box"><canvas id="c_staff_role"></canvas></div></div>
+      <div class="card c4"><div class="card-h"><div><h2>สมรรถนะ</h2><div class="sub">Benner · Novice → Expert</div></div><div class="total" id="t_competency"></div></div><div class="box"><canvas id="c_competency"></canvas></div></div>
+      <div class="card c5"><div class="card-h"><div><h2>ช่วงอายุ</h2></div><div class="total" id="t_age"></div></div><div class="box" style="height:240px"><canvas id="c_age"></canvas></div></div>
+      <div class="card c7"><div class="card-h"><div><h2>เกษียณอายุราชการ</h2><div class="sub">รายปีงบประมาณ 10 ปีข้างหน้า</div></div><div class="total" id="t_retire"></div></div><div class="box" style="height:240px"><canvas id="c_retire"></canvas></div></div>
+    </div>
+    <div class="foot">คลิกแท่งกราฟหรือชื่อรายการเพื่อกรองทุกกราฟ · คลิกซ้ำเพื่อยกเลิก</div>
+  </div>
+</div></div>
+
+<script>
+/* ===== ค่าคงที่ ===== */
+const NA='ไม่ระบุ';
+const BENNER=['Novice','Advanced Beginner','Competent','Proficient','Expert','ไม่ประเมิน'];
+const LEVELS=['ปฏิบัติการ','ชำนาญการ','ชำนาญการพิเศษ','เชี่ยวชาญ','ปฏิบัติงาน','ชำนาญงาน','อาวุโส','ไม่มีระดับ'];
+const ROLES=['หัวหน้ากลุ่มงาน','หัวหน้างาน','ผู้ปฏิบัติ'];
+const AGE=[['< 30',0,30],['30–39',30,40],['40–49',40,50],['50–54',50,55],['55–59',55,60],['≥ 60',60,999]];
+const MISSING=new Set([NA,'ไม่ประเมิน','ไม่มีระดับ']);       // แสดงเป็นสีเทา
+const SHORT={                                                    // ชื่อย่อสำหรับแสดงบนกราฟ (กรองด้วยชื่อเต็ม)
+  'พนักงานกระทรวงสาธารณสุข':'พนักงาน กสธ. (พกส.)',
+  'ลูกจ้างชั่วคราวรายวัน':'ลูกจ้างชั่วคราว รายวัน',
+  'ลูกจ้างชั่วคราวรายเดือน':'ลูกจ้างชั่วคราว รายเดือน',
+  'นักวิชาการสาธารณสุข(พยาบาล)':'นักวิชาการ สธ. (พยาบาล)',
+  'นักวิชาการสาธารณสุข':'นักวิชาการ สธ.',
+  'เจ้าพนักงานสาธารณสุข':'จพ. สาธารณสุข',
+};
+const short=v=>SHORT[v]||v;
+const now=new Date();
+const CUR_FY = now.getFullYear()+543 + (now.getMonth()>=9 ? 1 : 0);   // ปีงบ พ.ศ. (เริ่ม 1 ต.ค.)
+
+/* มิติที่กรองไขว้กันได้ */
+const DIMS={
+  type:{label:'ประเภท',      get:r=>r.type||NA},
+  position:{label:'ตำแหน่ง', get:r=>r.position||NA},
+  level:{label:'ระดับ',      get:r=>r.level||NA, order:LEVELS},
+  staff_role:{label:'บทบาท', get:r=>r.staff_role||NA, order:ROLES},
+  competency:{label:'สมรรถนะ',get:r=>r.competency||'ไม่ประเมิน', order:BENNER},
+  age:{label:'อายุ',         get:r=>{ if(r.age==null) return NA; const b=AGE.find(a=>r.age>=a[1]&&r.age<a[2]); return b?b[0]:NA; }, order:AGE.map(a=>a[0]).concat(NA)},
+  retire:{label:'เกษียณ',    get:r=>r.retire? 'ปีงบ '+r.retire : NA},
+};
+const CHART_DIMS=['position','type','level','staff_role','competency','age','retire'];
+const HORIZ={type:true,position:true,level:true,staff_role:true,competency:true};
+
+/* ===== state ===== */
+let ROWS=[], UPDATED='', STATUS='active';
+const sel={}; Object.keys(DIMS).forEach(k=>sel[k]=new Set());
+const charts={};
+const $=id=>document.getElementById(id);
+const css=v=>getComputedStyle(document.querySelector('.viz-root')).getPropertyValue(v).trim();
+const fmt=n=>Number(n).toLocaleString('th-TH');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ===== โหลดข้อมูล ===== */
+function load(){
+  $('stamp').textContent='กำลังโหลด…';
+  if (window.google && google.script && google.script.run){
+    google.script.run.withSuccessHandler(onData)
+      .withFailureHandler(e=>{$('stamp').textContent='โหลดข้อมูลไม่สำเร็จ: '+e.message;})
+      .getDashboardData();
+  } else if (window.__DATA__) onData(window.__DATA__);
+}
+function onData(d){
+  const p=d.personnel||[], h=p[0]||[];
+  const num=v=>v===''||v==null?null:Number(v);
+  ROWS=p.slice(1).map(a=>{ const o={}; h.forEach((k,i)=>o[k]=a[i]);
+    o.age=num(o.age); o.retire=num(o.retire_year_be); return o; });
+  UPDATED=d.updated||'';
+  $('loading').style.display='none'; $('app').style.display='';
+  render();
+}
+$('btnReload').onclick=load;
+$('seg').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  STATUS=b.dataset.v; $('seg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); render(); });
+$('btnClear').onclick=()=>{ Object.values(sel).forEach(s=>s.clear()); render(); };
+setInterval(load, 10*60*1000);   // ดึงใหม่ทุก 10 นาที
+
+/* ===== กรองไขว้ ===== */
+function base(){ return ROWS.filter(r=>!STATUS||r.status===STATUS); }
+function pass(r, except){
+  for (const k in sel){ if (k===except||!sel[k].size) continue; if(!sel[k].has(DIMS[k].get(r))) return false; }
+  return true;
+}
+function rowsExcept(dim){ return base().filter(r=>pass(r,dim)); }
+function toggle(dim,val){ const s=sel[dim]; s.has(val)?s.delete(val):s.add(val); render(); }
+function countDim(rows, dim){
+  const m=new Map(); rows.forEach(r=>{const k=DIMS[dim].get(r); m.set(k,(m.get(k)||0)+1);});
+  return m;
+}
+
+/* ===== render ===== */
+function render(){
+  renderChips();
+  CHART_DIMS.forEach(renderChart);
+  $('stamp').textContent=`อัปเดตล่าสุด ${UPDATED||'–'}`;
+}
+function renderChips(){
+  const html=[]; let any=false;
+  for(const k in sel) sel[k].forEach(v=>{ any=true;
+    html.push(`<span class="chip"><span>${DIMS[k].label}</span>${esc(short(v))}<button data-k="${k}" data-v="${esc(v)}" aria-label="ลบตัวกรอง">×</button></span>`); });
+  $('chips').innerHTML = any ? html.join('') : '<span class="hint">คลิกกราฟเพื่อกรอง</span>';
+  $('btnClear').style.display = any?'':'none';
+  $('chips').querySelectorAll('button').forEach(b=>b.onclick=()=>toggle(b.dataset.k,b.dataset.v));
+}
+
+/* ป้ายตัวเลข: จำนวน (ตัวหนา) + ร้อยละ (จาง) */
+const valueLabels={ id:'valueLabels', afterDatasetsDraw(c){
+  const horiz=c.options.indexAxis==='y', ctx=c.ctx, data=c.data.datasets[0].data;
+  const total=data.reduce((s,v)=>s+v,0); ctx.save();
+  const fam="'IBM Plex Sans Thai', system-ui, sans-serif";
+  c.getDatasetMeta(0).data.forEach((b,i)=>{ const v=data[i]; if(!v) return;
+    const pc=total?v/total*100:0, n=fmt(v), p=total?(pc<1?' <1%':` ${Math.round(pc)}%`):'';
+    ctx.textBaseline=horiz?'middle':'bottom';
+    ctx.font=`600 12.5px ${fam}`; const wN=ctx.measureText(n).width;
+    ctx.font=`400 11.5px ${fam}`; const wP=ctx.measureText(p).width;
+    let x=horiz? b.x+8 : b.x-(wN+wP)/2, y=horiz? b.y : b.y-5;
+    ctx.textAlign='left';
+    ctx.font=`600 12.5px ${fam}`; ctx.fillStyle=css('--text-primary'); ctx.fillText(n,x,y);
+    ctx.font=`400 11.5px ${fam}`; ctx.fillStyle=css('--text-muted'); ctx.fillText(p,x+wN,y);
+  });
+  ctx.restore(); } };
+Chart.register(valueLabels);
+Chart.defaults.font.family="'IBM Plex Sans Thai', system-ui, sans-serif";
+
+function renderChart(dim){
+  let entries;
+  const rows=rowsExcept(dim), m=countDim(rows,dim);
+  if(dim==='retire'){
+    entries=[]; for(let y=CUR_FY;y<CUR_FY+10;y++){ const k='ปีงบ '+y; entries.push([k,m.get(k)||0]); }
+  } else {
+    entries=[...m.entries()];
+    sel[dim].forEach(v=>{ if(!m.has(v)) entries.push([v,0]); });   // ค่าที่เลือกไว้ยังแสดงแม้เป็น 0
+    const ord=DIMS[dim].order;
+    if(ord){ const ix=v=>{const i=ord.indexOf(v);return i<0?99:i;}; entries.sort((a,b)=>ix(a[0])-ix(b[0])||b[1]-a[1]); }
+    else entries.sort((a,b)=>(MISSING.has(a[0])-MISSING.has(b[0]))||b[1]-a[1]);
+  }
+  // ยอดรวมของการ์ด = จำนวนคนตามตัวกรองทั้งหมด
+  const shown = dim==='retire' ? entries.reduce((s,e)=>s+e[1],0) : base().filter(r=>pass(r,null)).length;
+  $('t_'+dim).innerHTML = `<b>${fmt(shown)}</b>คน`;
+
+  const s=sel[dim], on=css('--accent'), off=css('--bar-off'), na=css('--bar-na');
+  const colors=entries.map(e=> (s.size && !s.has(e[0])) ? off : MISSING.has(e[0]) ? na : on);
+  const horiz=!!HORIZ[dim];
+  if(horiz) $('c_'+dim).parentElement.style.height = (entries.length*34+8)+'px';
+  const tick=css('--text-secondary');
+  const cfg={
+    type:'bar',
+    data:{labels:entries.map(e=>e[0]),datasets:[{data:entries.map(e=>e[1]),backgroundColor:colors,hoverBackgroundColor:colors,
+      borderRadius:6,borderSkipped:false,maxBarThickness:horiz?20:34,categoryPercentage:.8,barPercentage:.92}]},
+    options:{indexAxis:horiz?'y':'x',responsive:true,maintainAspectRatio:false,animation:{duration:250},
+      layout:{padding:{right:horiz?62:0,top:horiz?0:22}},
+      plugins:{legend:{display:false},
+        tooltip:{backgroundColor:'rgba(20,22,26,.92)',padding:10,cornerRadius:8,displayColors:false,
+          titleFont:{weight:'600'},callbacks:{title:it=>it[0].label,label:c=>fmt(c.raw)+' คน · คลิกเพื่อกรอง'}}},
+      scales:{
+        x:{display:!horiz,beginAtZero:true,grid:{display:false},border:{display:false},
+           ticks:{color:tick,font:{size:12.5},callback:function(v){return short(this.getLabelForValue(v));}}},
+        y:{display:horiz,beginAtZero:true,grid:{display:false},border:{display:false},
+           ticks:{color:tick,font:{size:13},padding:6,callback:function(v){return short(this.getLabelForValue(v));}}}
+      },
+      onClick:(e,els,c)=>{ if(els.length) toggle(dim,c.data.labels[els[0].index]); },
+      onHover:(e,els)=>{ e.native.target.style.cursor=els.length?'pointer':'default'; }
+    }
+  };
+  if(charts[dim]){ charts[dim].data=cfg.data; charts[dim].options=cfg.options; charts[dim].update(); }
+  else { charts[dim]=new Chart($('c_'+dim),cfg); bindAxisClick(dim); }
+}
+
+/* คลิก/ชี้ที่ชื่อรายการบนแกนก็กรองได้ (Chart.js ไม่ส่ง onClick นอกพื้นที่กราฟ) */
+function bindAxisClick(dim){
+  const cv=$('c_'+dim);
+  const hit=ev=>{
+    const c=charts[dim], r=cv.getBoundingClientRect(), x=ev.clientX-r.left, y=ev.clientY-r.top, a=c.chartArea;
+    const horiz=c.options.indexAxis==='y';
+    const inAxis = horiz ? (x<a.left && y>=a.top && y<=a.bottom) : (y>a.bottom && x>=a.left && x<=a.right);
+    if(!inAxis) return null;
+    const i=Math.round((horiz?c.scales.y:c.scales.x).getValueForPixel(horiz?y:x));
+    return c.data.labels[i]!=null ? c.data.labels[i] : null;
+  };
+  cv.addEventListener('click',ev=>{ const v=hit(ev); if(v!=null) toggle(dim,v); });
+  cv.addEventListener('mousemove',ev=>{ if(hit(ev)!=null) cv.style.cursor='pointer'; });
+}
+
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>ROWS.length&&render());
+load();
+</script>
+</body>
+</html>

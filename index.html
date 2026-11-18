@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>โครงสร้างกำลังคน กลุ่มการพยาบาล</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+.viz-root{
+  color-scheme:light;
+  --bg:#f3f5f9; --surface:#ffffff; --surface-2:#eef1f6; --border:#e6e9f0;
+  --text-primary:#14161a; --text-secondary:#5b6070; --text-muted:#9096a3;
+  --accent:#2a78d6; --accent-soft:#e8f1fc; --bar-na:#cfd3da;
+  --c-blue:#2a78d6; --c-orange:#eb6834; --c-aqua:#1baf7a; --c-yellow:#eda100;
+  --c-magenta:#e87ba4; --c-green:#008300; --c-violet:#6250d6; --c-red:#e34948;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06);
+  --hero:linear-gradient(120deg,#1c5cab 0%,#2a78d6 45%,#6250d6 100%);
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])) .viz-root{
+    color-scheme:dark;
+    --bg:#0f1012; --surface:#18191c; --surface-2:#232429; --border:#2a2c31;
+    --text-primary:#f0f1f3; --text-secondary:#b4b8c2; --text-muted:#7c818c;
+    --accent:#3987e5; --accent-soft:#1d2b3e; --bar-na:#4a4d55;
+    --c-blue:#3987e5; --c-orange:#d95926; --c-aqua:#199e70; --c-yellow:#c98500;
+    --c-magenta:#d55181; --c-green:#0ca30c; --c-violet:#9085e9; --c-red:#e66767;
+    --shadow:0 1px 2px rgba(0,0,0,.3);
+    --hero:linear-gradient(120deg,#104281 0%,#1c5cab 50%,#4a3aa7 100%);
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Prompt',system-ui,sans-serif;font-size:14px;font-weight:400;-webkit-font-smoothing:antialiased}
+.viz-root{background:var(--bg);color:var(--text-primary);min-height:100vh}
+.wrap{max-width:1360px;margin:0 auto;padding:24px 28px 40px}
+
+/* Hero header */
+.hero{background:var(--hero);color:#fff;border-radius:20px;padding:24px 28px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px;box-shadow:0 10px 30px rgba(42,120,214,.25)}
+.eyebrow{font-size:13px;font-weight:500;opacity:.85;margin-bottom:2px}
+h1{margin:0;font-size:28px;font-weight:600;letter-spacing:-.005em}
+.scope{font-size:15px;font-weight:300;opacity:.95;margin-top:2px}
+.hero-r{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.big{font-size:40px;font-weight:600;line-height:1}
+.big small{font-size:15px;font-weight:400;opacity:.85;margin-left:4px}
+.meta{display:flex;align-items:center;gap:8px;font-size:12.5px;opacity:.9}
+.dot{width:8px;height:8px;border-radius:50%;background:#5ff0b5;box-shadow:0 0 0 3px rgba(95,240,181,.25)}
+.icon-btn{border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;border-radius:10px;padding:5px 12px;font:inherit;font-size:12.5px;cursor:pointer}
+.icon-btn:hover{background:rgba(255,255,255,.22)}
+
+/* Toolbar */
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:12px;padding:4px;gap:2px}
+.seg button{border:none;background:none;font:inherit;font-size:13px;color:var(--text-secondary);padding:6px 14px;border-radius:9px;cursor:pointer}
+.seg button.on{background:var(--surface);color:var(--text-primary);font-weight:500;box-shadow:0 1px 3px rgba(16,24,40,.12)}
+.unit-sel{appearance:none;-webkit-appearance:none;font:inherit;font-size:13.5px;color:var(--text-primary);background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5l3 3 3-3' fill='none' stroke='%239096a3' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 12px center;border:1px solid var(--border);border-radius:12px;padding:8px 34px 8px 14px;min-width:270px;max-width:100%;cursor:pointer}
+.unit-sel.on{border-color:var(--accent);background-color:var(--accent-soft);font-weight:500}
+.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;flex:1}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:5px 6px 5px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--border);font-size:13px}
+.chip i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.chip span{color:var(--text-muted)}
+.chip button{border:none;background:none;color:var(--text-secondary);cursor:pointer;font-size:15px;line-height:1;width:22px;height:22px;border-radius:50%}
+.chip button:hover{background:var(--surface-2)}
+.hint{color:var(--text-muted);font-size:13px}
+.clear{border:none;background:none;color:var(--accent);font:inherit;font-size:13px;cursor:pointer;font-weight:500}
+
+/* Grid & cards */
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.c3{grid-column:span 3}.c4{grid-column:span 4}.c5{grid-column:span 5}.c6{grid-column:span 6}.c7{grid-column:span 7}
+@media(max-width:1180px){.c3{grid-column:span 6}.c4{grid-column:span 6}.c5,.c7{grid-column:span 12}}
+@media(max-width:720px){.c3,.c4,.c6{grid-column:span 12}.wrap{padding:14px}}
+.card{background:var(--surface);border-radius:18px;padding:18px 20px 16px;box-shadow:var(--shadow);border:1px solid var(--border);min-width:0;position:relative;overflow:hidden}
+.card::before{content:"";position:absolute;left:0;top:0;right:0;height:4px;background:var(--hue)}
+.card-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:12px}
+.ttl{display:flex;align-items:center;gap:10px}
+.ico{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:16px;background:color-mix(in srgb,var(--hue) 14%,transparent);color:var(--hue)}
+.card h2{margin:0;font-size:15.5px;font-weight:500}
+.card .sub{font-size:12px;color:var(--text-muted)}
+.total{font-size:12.5px;color:var(--text-muted);white-space:nowrap}
+.total b{font-size:18px;color:var(--text-primary);font-weight:600;margin-right:3px;font-variant-numeric:tabular-nums}
+.box{position:relative}
+
+/* Donut */
+.donut{display:flex;align-items:center;gap:18px}
+.donut .ring{position:relative;width:170px;height:170px;flex:none}
+.donut .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.donut .center b{font-size:26px;font-weight:600;line-height:1.1}
+.donut .center span{font-size:12px;color:var(--text-muted)}
+.lg{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
+.lg button{display:grid;grid-template-columns:12px 1fr auto auto;align-items:center;gap:8px;border:none;background:none;font:inherit;color:var(--text-primary);text-align:left;padding:6px 8px;border-radius:9px;cursor:pointer}
+.lg button:hover{background:var(--surface-2)}
+.lg button.off{opacity:.38}
+.lg i{width:12px;height:12px;border-radius:4px}
+.lg .nm{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg .v{font-weight:600;font-variant-numeric:tabular-nums}
+.lg .p{font-size:12px;color:var(--text-muted);min-width:34px;text-align:right}
+@media(max-width:420px){.donut{flex-direction:column}}
+
+#loading{padding:120px 0;text-align:center;color:var(--text-secondary)}
+.foot{margin-top:18px;font-size:12px;color:var(--text-muted);text-align:center}
+</style>
+</head>
+<body>
+<div class="viz-root"><div class="wrap">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">กลุ่มการพยาบาล · รพร.สว่างแดนดิน</div>
+      <h1>โครงสร้างกำลังคน</h1>
+      <div class="scope" id="scope">ทุกหน่วยงาน</div>
+    </div>
+    <div class="hero-r">
+      <div class="big" id="bigTotal">–<small>คน</small></div>
+      <div class="meta"><span class="dot"></span><span id="stamp">กำลังโหลด…</span>
+        <button class="icon-btn" id="btnReload">↻ รีเฟรช</button></div>
+    </div>
+  </div>
+
+  <div id="loading">กำลังโหลดข้อมูล…</div>
+  <div id="app" style="display:none">
+    <div class="toolbar">
+      <div class="seg" id="seg">
+        <button data-v="active" class="on">ปฏิบัติงานอยู่</button>
+        <button data-v="exited">ออกแล้ว</button>
+        <button data-v="">ทั้งหมด</button>
+      </div>
+      <select class="unit-sel" id="fUnit" aria-label="เลือกหน่วยงาน"></select>
+      <div class="chips" id="chips"></div>
+      <button class="clear" id="btnClear" style="display:none">ล้างตัวกรอง</button>
+    </div>
+
+    <div class="grid">
+      <div class="card c6" style="--hue:var(--c-blue)">
+        <div class="card-h"><div class="ttl"><div class="ico">👩‍⚕️</div><div><h2>ตำแหน่ง</h2></div></div><div class="total" id="t_position"></div></div>
+        <div class="box"><canvas id="c_position"></canvas></div></div>
+
+      <div class="card c6" style="--hue:var(--c-orange)">
+        <div class="card-h"><div class="ttl"><div class="ico">📋</div><div><h2>ประเภทการจ้าง</h2></div></div><div class="total" id="t_type"></div></div>
+        <div class="donut"><div class="ring"><canvas id="c_type"></canvas><div class="center"><b id="ctr_type">–</b><span>คน</span></div></div><div class="lg" id="lg_type"></div></div></div>
+
+      <div class="card c4" style="--hue:var(--c-violet)">
+        <div class="card-h"><div class="ttl"><div class="ico">🎖️</div><div><h2>ระดับ</h2></div></div><div class="total" id="t_level"></div></div>
+        <div class="box"><canvas id="c_level"></canvas></div></div>
+
+      <div class="card c4" style="--hue:var(--c-magenta)">
+        <div class="card-h"><div class="ttl"><div class="ico">🧭</div><div><h2>บทบาท</h2></div></div><div class="total" id="t_staff_role"></div></div>
+        <div class="donut"><div class="ring"><canvas id="c_staff_role"></canvas><div class="center"><b id="ctr_staff_role">–</b><span>คน</span></div></div><div class="lg" id="lg_staff_role"></div></div></div>
+
+      <div class="card c4" style="--hue:var(--c-green)">
+        <div class="card-h"><div class="ttl"><div class="ico">📈</div><div><h2>สมรรถนะ</h2><div class="sub">Benner · Novice → Expert</div></div></div><div class="total" id="t_competency"></div></div>
+        <div class="box"><canvas id="c_competency"></canvas></div></div>
+
+      <div class="card c5" style="--hue:var(--c-aqua)">
+        <div class="card-h"><div class="ttl"><div class="ico">🎂</div><div><h2>ช่วงอายุ</h2></div></div><div class="total" id="t_age"></div></div>
+        <div class="box" style="height:250px"><canvas id="c_age"></canvas></div></div>
+
+      <div class="card c7" style="--hue:var(--c-red)">
+        <div class="card-h"><div class="ttl"><div class="ico">🗓️</div><div><h2>เกษียณอายุราชการ</h2><div class="sub">รายปีงบประมาณ 10 ปีข้างหน้า</div></div></div><div class="total" id="t_retire"></div></div>
+        <div class="box" style="height:250px"><canvas id="c_retire"></canvas></div></div>
+    </div>
+    <div class="foot">คลิกแท่ง ชิ้นวงกลม หรือชื่อรายการ เพื่อกรองทุกกราฟ · คลิกซ้ำเพื่อยกเลิก</div>
+  </div>
+</div></div>
+
+<script>
+/* ===== ค่าคงที่ ===== */
+const NA='ไม่ระบุ';
+const BENNER=['Novice','Advanced Beginner','Competent','Proficient','Expert','ไม่ประเมิน'];
+const LEVELS=['ปฏิบัติการ','ชำนาญการ','ชำนาญการพิเศษ','เชี่ยวชาญ','ปฏิบัติงาน','ชำนาญงาน','อาวุโส','ไม่มีระดับ'];
+const ROLES=['หัวหน้ากลุ่มงาน','หัวหน้างาน','ผู้ปฏิบัติ'];
+const AGE=[['< 30',0,30],['30–39',30,40],['40–49',40,50],['50–54',50,55],['55–59',55,60],['≥ 60',60,999]];
+const MISSING=new Set([NA,'ไม่ประเมิน','ไม่มีระดับ']);       // สีเทา
+const SHORT={
+  'พนักงานกระทรวงสาธารณสุข':'พนักงาน กสธ. (พกส.)',
+  'ลูกจ้างชั่วคราวรายวัน':'ลูกจ้างชั่วคราว รายวัน',
+  'ลูกจ้างชั่วคราวรายเดือน':'ลูกจ้างชั่วคราว รายเดือน',
+  'นักวิชาการสาธารณสุข(พยาบาล)':'นักวิชาการ สธ. (พยาบาล)',
+  'นักวิชาการสาธารณสุข':'นักวิชาการ สธ.',
+  'เจ้าพนักงานสาธารณสุข':'จพ. สาธารณสุข',
+};
+const short=v=>SHORT[v]||v;
+const now=new Date();
+const CUR_FY = now.getFullYear()+543 + (now.getMonth()>=9 ? 1 : 0);
+
+/* มิติที่กรองไขว้กันได้ · kind: bar | donut | ramp(ไล่สีตามลำดับ) */
+const DIMS={
+  type:{label:'ประเภท', hue:'--c-orange', kind:'donut', get:r=>r.type||NA},
+  position:{label:'ตำแหน่ง', hue:'--c-blue', kind:'hbar', get:r=>r.position||NA},
+  level:{label:'ระดับ', hue:'--c-violet', kind:'hbar', ramp:['ปฏิบัติการ','ชำนาญการ','ชำนาญการพิเศษ','เชี่ยวชาญ'], get:r=>r.level||NA, order:LEVELS},
+  staff_role:{label:'บทบาท', hue:'--c-magenta', kind:'donut', get:r=>r.staff_role||NA, order:ROLES},
+  competency:{label:'สมรรถนะ', hue:'--c-green', kind:'hbar', ramp:BENNER.slice(0,5), get:r=>r.competency||'ไม่ประเมิน', order:BENNER},
+  age:{label:'อายุ', hue:'--c-aqua', kind:'vbar', ramp:AGE.map(a=>a[0]), get:r=>r.age_band||NA, order:AGE.map(a=>a[0]).concat(NA)},
+  retire:{label:'เกษียณ', hue:'--c-red', kind:'vbar', get:r=>r.retire? 'ปีงบ '+r.retire : NA},
+  unit:{label:'หน่วยงาน', hue:'--accent', get:r=>r.unit||NA},
+};
+const CHART_DIMS=['position','type','level','staff_role','competency','age','retire'];
+const DONUT_PAL=['--c-blue','--c-orange','--c-aqua','--c-yellow','--c-magenta'];   // ลำดับที่ผ่านการตรวจ CVD
+
+/* ===== state ===== */
+let ROWS=[], UPDATED='', STATUS='active';
+const sel={}; Object.keys(DIMS).forEach(k=>sel[k]=new Set());
+const charts={}, COLORMAP={};
+const $=id=>document.getElementById(id);
+const css=v=>getComputedStyle(document.querySelector('.viz-root')).getPropertyValue(v).trim();
+const fmt=n=>Number(n).toLocaleString('th-TH');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const FONT="'Prompt', system-ui, sans-serif";
+
+/* ผสมสี: t=1 สีเต็ม, t→0 เข้าหาพื้นหลัง */
+function mix(hex,bg,t){
+  const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)), a=p(hex), b=p(bg);
+  return '#'+a.map((v,i)=>Math.round(b[i]+(v-b[i])*t).toString(16).padStart(2,'0')).join('');
+}
+const fade=hex=>mix(hex,css('--surface'),.22);
+
+/* ===== โหลดข้อมูล ===== */
+function load(){
+  $('stamp').textContent='กำลังโหลด…';
+  if (window.__DATA__) return onData(window.__DATA__);
+  fetch('data.json?t='+Date.now(),{cache:'no-store'})
+    .then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(onData)
+    .catch(e=>{ $('stamp').textContent='โหลดข้อมูลไม่สำเร็จ: '+e.message; });
+}
+function onData(d){
+  const f=d.fields||[];
+  ROWS=(d.rows||[]).map(a=>{ const o={}; f.forEach((k,i)=>o[k]=a[i]); o.retire=o.retire_fy?Number(o.retire_fy):null; return o; });
+  UPDATED=d.updated||'';
+  $('loading').style.display='none'; $('app').style.display='';
+  render();
+}
+$('btnReload').onclick=load;
+$('seg').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  STATUS=b.dataset.v; $('seg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); render(); });
+$('fUnit').onchange=e=>{ sel.unit.clear(); if(e.target.value) sel.unit.add(e.target.value); render(); };
+$('btnClear').onclick=()=>{ Object.values(sel).forEach(s=>s.clear()); render(); };
+setInterval(load, 10*60*1000);
+
+/* ===== กรองไขว้ ===== */
+function base(){ return ROWS.filter(r=>!STATUS||r.status===STATUS); }
+function pass(r, except){
+  for (const k in sel){ if (k===except||!sel[k].size) continue; if(!sel[k].has(DIMS[k].get(r))) return false; }
+  return true;
+}
+function rowsExcept(dim){ return base().filter(r=>pass(r,dim)); }
+function toggle(dim,val){ const s=sel[dim]; s.has(val)?s.delete(val):s.add(val); render(); }
+function countDim(rows, dim){
+  const m=new Map(); rows.forEach(r=>{const k=DIMS[dim].get(r); m.set(k,(m.get(k)||0)+1);});
+  return m;
+}
+
+/* ===== render ===== */
+function render(){
+  const n=base().filter(r=>pass(r,null)).length;
+  $('bigTotal').innerHTML=`${fmt(n)}<small>คน</small>`;
+  $('stamp').textContent=`อัปเดตล่าสุด ${UPDATED||'–'}`;
+  renderChips(); renderUnitSelect();
+  CHART_DIMS.forEach(d=> DIMS[d].kind==='donut' ? renderDonut(d) : renderBar(d));
+}
+function renderUnitSelect(){
+  const m=countDim(rowsExcept('unit'),'unit');
+  sel.unit.forEach(u=>{ if(!m.has(u)) m.set(u,0); });
+  const units=[...m.entries()].sort((a,b)=>a[0].localeCompare(b[0],'th'));
+  const total=units.reduce((s,u)=>s+u[1],0);
+  const cur=sel.unit.size===1?[...sel.unit][0]:'';
+  $('fUnit').innerHTML=`<option value="">🏥 ทุกหน่วยงาน (${fmt(total)} คน)</option>`+
+    units.map(u=>`<option value="${esc(u[0])}">${esc(u[0])} (${fmt(u[1])})</option>`).join('');
+  $('fUnit').value=cur;
+  $('fUnit').classList.toggle('on',!!cur);
+  $('scope').textContent = sel.unit.size ? [...sel.unit].join(', ') : 'ภาพรวมทุกหน่วยงาน';
+}
+function renderChips(){
+  const html=[]; let any=false;
+  for(const k in sel) sel[k].forEach(v=>{ any=true;
+    html.push(`<span class="chip"><i style="background:${css(DIMS[k].hue)}"></i><span>${DIMS[k].label}</span>${esc(short(v))}<button data-k="${k}" data-v="${esc(v)}" aria-label="ลบตัวกรอง">×</button></span>`); });
+  $('chips').innerHTML = any ? html.join('') : '<span class="hint">คลิกกราฟเพื่อกรอง</span>';
+  $('btnClear').style.display = any?'':'none';
+  $('chips').querySelectorAll('button').forEach(b=>b.onclick=()=>toggle(b.dataset.k,b.dataset.v));
+}
+
+function entriesFor(dim){
+  const m=countDim(rowsExcept(dim),dim);
+  let e;
+  if(dim==='retire'){ e=[]; for(let y=CUR_FY;y<CUR_FY+10;y++){ const k='ปีงบ '+y; e.push([k,m.get(k)||0]); } return e; }
+  e=[...m.entries()];
+  sel[dim].forEach(v=>{ if(!m.has(v)) e.push([v,0]); });
+  const ord=DIMS[dim].order;
+  if(ord){ const ix=v=>{const i=ord.indexOf(v);return i<0?99:i;}; e.sort((a,b)=>ix(a[0])-ix(b[0])||b[1]-a[1]); }
+  else e.sort((a,b)=>(MISSING.has(a[0])-MISSING.has(b[0]))||b[1]-a[1]);
+  return e;
+}
+
+/* สีของแต่ละแท่ง: สีประจำการ์ด / ไล่เข้มตามลำดับ / เทาถ้าไม่มีข้อมูล */
+function barColors(dim,entries){
+  const D=DIMS[dim], hue=css(D.hue), bg=css('--surface'), na=css('--bar-na'), s=sel[dim];
+  return entries.map(([k])=>{
+    let c = MISSING.has(k) ? na : hue;
+    if(D.ramp && !MISSING.has(k)){ const i=D.ramp.indexOf(k); if(i>=0) c=mix(hue,bg, .45+.55*(i/Math.max(1,D.ramp.length-1))); }
+    return (s.size && !s.has(k)) ? fade(c) : c;
+  });
+}
+
+const valueLabels={ id:'valueLabels', afterDatasetsDraw(c){
+  if(c.config.type!=='bar') return;
+  const horiz=c.options.indexAxis==='y', ctx=c.ctx, data=c.data.datasets[0].data;
+  const total=data.reduce((s,v)=>s+v,0); ctx.save();
+  c.getDatasetMeta(0).data.forEach((b,i)=>{ const v=data[i]; if(!v) return;
+    const pc=total?v/total*100:0, n=fmt(v), p=total?(pc<1?' <1%':` ${Math.round(pc)}%`):'';
+    ctx.textBaseline=horiz?'middle':'bottom';
+    ctx.font=`600 12.5px ${FONT}`; const wN=ctx.measureText(n).width;
+    ctx.font=`400 11.5px ${FONT}`; const wP=ctx.measureText(p).width;
+    const x=horiz? b.x+8 : b.x-(wN+wP)/2, y=horiz? b.y : b.y-5;
+    ctx.textAlign='left';
+    ctx.font=`600 12.5px ${FONT}`; ctx.fillStyle=css('--text-primary'); ctx.fillText(n,x,y);
+    ctx.font=`400 11.5px ${FONT}`; ctx.fillStyle=css('--text-muted'); ctx.fillText(p,x+wN,y);
+  });
+  ctx.restore(); } };
+Chart.register(valueLabels);
+Chart.defaults.font.family=FONT;
+
+function tooltip(){ return {backgroundColor:'rgba(20,22,26,.92)',padding:10,cornerRadius:10,displayColors:false,
+  titleFont:{weight:'500'},callbacks:{title:it=>it[0].label,label:c=>fmt(c.raw)+' คน · คลิกเพื่อกรอง'}}; }
+function setTotal(dim,entries){
+  const n = dim==='retire' ? entries.reduce((s,e)=>s+e[1],0) : base().filter(r=>pass(r,null)).length;
+  $('t_'+dim).innerHTML=`<b>${fmt(n)}</b>คน`;
+}
+function upsert(dim,cfg){
+  if(charts[dim]){ charts[dim].data=cfg.data; charts[dim].options=cfg.options; charts[dim].update(); }
+  else { charts[dim]=new Chart($('c_'+dim),cfg); if(cfg.type==='bar') bindAxisClick(dim); }
+}
+
+function renderBar(dim){
+  const entries=entriesFor(dim); setTotal(dim,entries);
+  const colors=barColors(dim,entries), horiz=DIMS[dim].kind==='hbar', tick=css('--text-secondary');
+  if(horiz) $('c_'+dim).parentElement.style.height=(entries.length*34+8)+'px';
+  upsert(dim,{
+    type:'bar',
+    data:{labels:entries.map(e=>e[0]),datasets:[{data:entries.map(e=>e[1]),backgroundColor:colors,hoverBackgroundColor:colors,
+      borderRadius:7,borderSkipped:false,maxBarThickness:horiz?20:36,categoryPercentage:.8,barPercentage:.92}]},
+    options:{indexAxis:horiz?'y':'x',responsive:true,maintainAspectRatio:false,animation:{duration:300},
+      layout:{padding:{right:horiz?62:0,top:horiz?0:22}},
+      plugins:{legend:{display:false},tooltip:tooltip()},
+      scales:{
+        x:{display:!horiz,grid:{display:false},border:{display:false},ticks:{color:tick,font:{size:12.5}}},
+        y:{display:horiz,beginAtZero:true,grid:{display:false},border:{display:false},
+           ticks:{color:tick,font:{size:13},padding:6,callback:function(v){return short(this.getLabelForValue(v));}}}
+      },
+      onClick:(e,els,c)=>{ if(els.length) toggle(dim,c.data.labels[els[0].index]); },
+      onHover:(e,els)=>{ e.native.target.style.cursor=els.length?'pointer':'default'; }
+    }
+  });
+}
+
+function renderDonut(dim){
+  const entries=entriesFor(dim).filter(e=>e[1]>0||sel[dim].has(e[0])); setTotal(dim,entries);
+  const s=sel[dim], na=css('--bar-na'), surface=css('--surface');
+  // สีผูกกับรายการถาวร (ไม่เปลี่ยนตามการกรอง) — กำหนดจากข้อมูลทั้งหมด เรียงจากมากไปน้อย
+  const cmap=COLORMAP[dim]||(COLORMAP[dim]=new Map());
+  [...countDim(ROWS,dim).entries()].filter(([k])=>!MISSING.has(k)).sort((a,b)=>b[1]-a[1])
+    .forEach(([k])=>{ if(!cmap.has(k)) cmap.set(k, DONUT_PAL[Math.min(cmap.size,DONUT_PAL.length-1)]); });
+  const full=entries.map(([k])=> MISSING.has(k)||!cmap.has(k) ? na : css(cmap.get(k)));
+  const colors=entries.map(([k],i)=>(s.size&&!s.has(k))?fade(full[i]):full[i]);
+  const sum=entries.filter(([k])=>!s.size||s.has(k)).reduce((a,e)=>a+e[1],0);
+  $('ctr_'+dim).textContent=fmt(sum);
+  const total=entries.reduce((a,e)=>a+e[1],0);
+  $('lg_'+dim).innerHTML=entries.map(([k,v],i)=>`<button class="${s.size&&!s.has(k)?'off':''}" data-v="${esc(k)}">
+     <i style="background:${full[i]}"></i><span class="nm" title="${esc(k)}">${esc(short(k))}</span>
+     <span class="v">${fmt(v)}</span><span class="p">${total?(v/total*100<1&&v?'<1':Math.round(v/total*100))+'%':''}</span></button>`).join('');
+  $('lg_'+dim).querySelectorAll('button').forEach(b=>b.onclick=()=>toggle(dim,b.dataset.v));
+  upsert(dim,{
+    type:'doughnut',
+    data:{labels:entries.map(e=>e[0]),datasets:[{data:entries.map(e=>e[1]),backgroundColor:colors,hoverBackgroundColor:colors,
+      borderColor:surface,borderWidth:3,hoverOffset:6,borderRadius:6,spacing:1}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',animation:{duration:300},layout:{padding:6},
+      plugins:{legend:{display:false},tooltip:tooltip()},
+      onClick:(e,els,c)=>{ if(els.length) toggle(dim,c.data.labels[els[0].index]); },
+      onHover:(e,els)=>{ e.native.target.style.cursor=els.length?'pointer':'default'; }
+    }
+  });
+}
+
+/* คลิกที่ชื่อรายการบนแกนก็กรองได้ */
+function bindAxisClick(dim){
+  const cv=$('c_'+dim);
+  const hit=ev=>{
+    const c=charts[dim], r=cv.getBoundingClientRect(), x=ev.clientX-r.left, y=ev.clientY-r.top, a=c.chartArea;
+    const horiz=c.options.indexAxis==='y';
+    const inAxis = horiz ? (x<a.left && y>=a.top && y<=a.bottom) : (y>a.bottom && x>=a.left && x<=a.right);
+    if(!inAxis) return null;
+    const i=Math.round((horiz?c.scales.y:c.scales.x).getValueForPixel(horiz?y:x));
+    return c.data.labels[i]!=null ? c.data.labels[i] : null;
+  };
+  cv.addEventListener('click',ev=>{ const v=hit(ev); if(v!=null) toggle(dim,v); });
+  cv.addEventListener('mousemove',ev=>{ if(hit(ev)!=null) cv.style.cursor='pointer'; });
+}
+
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>ROWS.length&&render());
+load();
+</script>
+</body>
+</html>
