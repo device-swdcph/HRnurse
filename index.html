@@ -252,7 +252,8 @@ function countDim(rows, dim){
 function render(){
   const n=base().filter(r=>pass(r,null)).length;
   $('bigTotal').innerHTML=`${fmt(n)}<small>คน</small>`;
-  $('stamp').textContent=`อัปเดตล่าสุด ${UPDATED||'–'}`;
+  $('stamp').textContent=`ข้อมูลเปลี่ยนล่าสุด ${UPDATED||'–'}`;
+  $('stamp').title='ระบบตรวจข้อมูลทุกชั่วโมง และอัปเดตหน้านี้เฉพาะเมื่อข้อมูลเปลี่ยน';
   renderChips(); renderUnitSelect();
   CHART_DIMS.forEach(d=> DIMS[d].kind==='donut' ? renderDonut(d) : renderBar(d));
 }
